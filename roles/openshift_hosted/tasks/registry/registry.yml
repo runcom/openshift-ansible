@@ -3,6 +3,9 @@
   include: firewall.yml
   static: yes
 
+- set_fact:
+    l_use_crio: "{{ openshift_use_crio | default(false) }}"
+
 - when: openshift.hosted.registry.replicas | default(none) is none
   block:
   - name: Retrieve list of openshift nodes matching registry selector
@@ -123,6 +126,10 @@
       claim_name: "{{ openshift.hosted.registry.storage.volume.name }}-claim"
   when:
   - openshift.hosted.registry.storage.kind | default(none) in ['nfs', 'openstack', 'glusterfs']
+
+- name: Flush iptables
+  iptables: flush=yes
+  when: l_use_crio
 
 - name: Create OpenShift registry
   oc_adm_registry:

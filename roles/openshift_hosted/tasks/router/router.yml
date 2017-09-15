@@ -3,6 +3,9 @@
   include: firewall.yml
   static: yes
 
+- set_fact:
+    l_use_crio: "{{ openshift_use_crio | default(false) }}"
+
 - name: Retrieve list of openshift nodes matching router selector
   oc_obj:
     state: list
@@ -75,6 +78,10 @@
     resource_name: cluster-reader
   when: item.namespace == 'default'
   with_items: "{{ openshift_hosted_routers }}"
+
+- name: Flush iptables
+  iptables: flush=yes
+  when: l_use_crio
 
 - name: Create OpenShift router
   oc_adm_router:
